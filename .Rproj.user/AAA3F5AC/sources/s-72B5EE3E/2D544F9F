@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566712185128.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3770004251",
+    "id" : "2D544F9F",
+    "lastKnownWriteTime" : 1566712253,
+    "last_content_update" : 1566712253765,
+    "path" : "~/GitHub/jmt/main.r",
+    "project_path" : "main.r",
+    "properties" : {
+        "cursorPosition" : "34,95",
+        "scrollLine" : "28"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
