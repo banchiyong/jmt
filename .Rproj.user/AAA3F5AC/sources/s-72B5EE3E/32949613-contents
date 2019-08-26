@@ -1,0 +1,146 @@
+rm(list=ls())
+gc()
+options(stringsAsFactors = FALSE)
+options(digits = 2)
+options(scipen = 100)
+library(dplyr)
+library(MatchIt)
+library(stringr)
+library(data.table)
+
+
+
+## Make pure code list 2003####
+df2003 = fread("C:/R/miguem_nhis/raw_data/preprocessing/cbind2040_person/2003.txt")
+symptom2003 <- df2003[,3]
+symptom2003 <- symptom2003[grep("[a-zA-Z]{1}[0-9]{2}", symptom2003$SICK_SYM),] #remove the incorrect value#
+n_occur2003 <- data.frame(table(symptom2003$SICK_SYM)) #get Freq
+sorted2003 <- n_occur2003[c(order(-n_occur2003$Freq)),] #order
+s2003Fsum <- sum(sorted2003$Freq) #sum of Frequency
+df_data <- sorted2003 %>% group_by(Var1, Freq) %>% summarise(total = s2003Fsum) #mutate total of Freq
+df_data1 <- df_data[c(order(df_data$Freq)),] #order Freq
+df_data.1 <- df_data %>% group_by(Var1) %>% mutate(per = Freq / total)#mutate the percent
+o2003 <- df_data.1[c(order(-df_data.1$Freq)),] 
+cumper2003 <- cumsum(o2003$per) #cumilative percent
+Pclear2003 <- o2003
+Pclear2003["Cum_per"] <-cumper2003
+colnames(Pclear2003)=c("SICK_SYM","Frq","Total","Per","Cum_per") #give a colnames
+setwd("C:/R/miguem_nhis/tutorial/preprocessing/filtered/filtered_symptom_frequency")
+write.table(Pclear2003, file = "P2003Clear.txt", row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t", append = FALSE)
+Disease_from_list_2003 <- subset(Pclear2003, Cum_per <=0.9545) #95.45% cut
+Disease_from_list_2003 <- Disease_from_list_2003[,c(1,2,5)] #Sick_SYM, freq, Cum_Per
+Disease_from_list_2003_sorted <- Disease_from_list_2003[c(order(Disease_from_list_2003$Frq)),]
+write.table(Disease_from_list_2003, file ="Disease_from_list_2003.txt", row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t", append = FALSE)
+write.table(Disease_from_list_2003_sorted, file ="Disease_from_list_2003_sorted.txt", row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t", append = FALSE)
+
+
+
+#load  sorted disease list2003
+setwd("C:/R/miguem_nhis/tutorial/preprocessing/filtered/filtered_symptom_frequency")
+code_list2003 <- fread("Disease_from_list_2003_sorted.txt")
+code_list2003 <- na.omit(code_list2003)
+code_list2003 <- code_list2003[c(order(code_list2003$Frq)),] #order by Frq
+which(is.na(code_list2003))
+pure_code_list2003 <- code_list2003[,SICK_SYM] # cut SICK_SYM off
+######
+
+
+
+## get SICK_SYM, P_ID from 2003
+#setwd("C:/R/miguem_nhis/tutorial/preprocessing/filtered/filtered_symptom_frequency")
+#df2003 = fread("C:/R/miguem_nhis/raw_data/preprocessing/cbind2040_person/2003.txt")
+#SYM_PID2003 <- df2003[,c(1,3)]
+#SYM_PID2003 <- SYM_PID2003[grep("[a-zA-Z]{1}[0-9]{2}", SYM_PID2003$SICK_SYM),] #check 12724229obs. of 2var
+#SYM_PID2003_u <- unique(SYM_PID2003)#check 6111979 obs. of 2var
+
+## get SICK_SYM, P_ID from 2003
+setwd("C:/R/miguem_nhis/tutorial/preprocessing/filtered/filtered_symptom_frequency")
+df2003 = fread("C:/R/miguem_nhis/raw_data/preprocessing/cbind2040_person/2003.txt")
+df2003 <- unique(df2003)
+SYM_PID2003 <- df2003[,c(1,3)]
+SYM_PID2003 <- SYM_PID2003[grep("[a-zA-Z]{1}[0-9]{2}", SYM_PID2003$SICK_SYM),] #check 12522976obs. of 2var
+#nrow(SYM_PID2003)
+
+## get SICK_SYM, P_ID from 2002
+setwd("C:/R/miguem_nhis/tutorial/preprocessing/filtered/filtered_symptom_frequency")
+df2002 = fread("C:/R/miguem_nhis/raw_data/preprocessing/cbind2040_person/2002.txt")
+SYM_PID2002 <- df2002[,c(1,3)]
+SYM_PID2002 <- SYM_PID2002[grep("[a-zA-Z]{1}[0-9]{2}", SYM_PID2002$SICK_SYM),]
+#SYM_PID2002_U <- unique(SYM_PID2002$SICK_SYM)
+#SYM_PID2002 <- subset(SYM_PID2002, SICK_SYM = SYM_PID2002_U)
+#SYMPID2002_Unique <- unique(SYM_PID2002)
+
+
+
+
+##set dir & make start list
+setwd("C:/R/miguem_nhis/raw_data/preprocessing/propensity/psm0.1")
+file_list <- list.files(path = ".", pattern = NULL)
+exist_list = str_extract(file_list,"([A-Za-z]{1}[0-9]{2})") # get NA value except filterd value
+start_list = setdiff(pure_code_list2003,exist_list)
+
+
+
+#filter fst_step i="F10"
+for (i in start_list){
+  treat_code <- i
+  print(paste0("From"," ",treat_code))
+  ##condition#########
+  SICK_011 <- subset(SYM_PID2002,SYM_PID2002$SICK_SYM==i) #who get disease"i" in 2002
+  SICK_010 <- subset(SYM_PID2002,SYM_PID2002$SICK_SYM!=i) #who don't get disease"i" in 2002
+  #united_010 <- inner_join(SICK_010,SYM_PID2003, by = "PERSON_ID")
+  united_010 <- setdiff(SYM_PID2003,SICK_011) #check 6009138 obs. of 2var
+  united_010_u <- unique(united_010) #check 6009138 obs. of 2var
+  united_010f <- table(united_010$SICK_SYM)
+  united_010 <- mutate(united_010,freq = 1)
+  united_010last <- as.data.frame(united_010)
+  
+  
+  #check####
+  #subset(united_010,united_010$PERSON_ID==83817406)
+  #subset(SICK_011,SICK_011$PERSON_ID==81855367)
+  #/check####
+  #subset(S2003_010,S2003_010$SICK_SYM=="N60")
+  #write.table(S2003_010,"A.txt", row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+  #####/condition####
+  ####make a colname####
+  #coln <- c("PERSON_ID","SICK_SYM","Freq")
+  #coln <- rbind(coln,coln)
+  #coln <- unique(coln)
+  #colnames(coln)<- c("PERSON_ID","SICK_SYM","Freq")
+  file_name = paste0(treat_code,".txt")
+  #coln <- coln[-1,]
+  ####/make a colname####
+  
+  
+ # write.table(coln,file_name, row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t",append=FALSE)
+  write.table(united_010last,file_name, row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t",append=FALSE)
+  
+  #for (k in pure_code_list2003){
+    
+    #s2003frq <- subset(S2003_010,S2003_010$SICK_SYM==k)
+    #s2003frq <- table(s2003frq) 
+    #s2003frq <- as.data.frame(s2003frq)
+    
+    #write.table(s2003frq,file_name, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t",append=TRUE)  
+  #}
+}
+
+
+  ####load and check Freq###
+#set load file
+setwd("C:/R/miguem_nhis/raw_data/preprocessing/propensity/psm0.1")
+load_file <- list.files(path = ".", pattern = ".txt")
+for (k in load_file){
+  freq_checked <- fread(k)
+  check_freq <- subset(freq_checked,freq_checked$freq >= 1)
+    if (nrow(check_freq)>=1){
+      print(check_freq)
+    }
+  print(k)
+  
+  
+}
+
+
+
