@@ -1,10 +1,9 @@
+#####Set Env#####
 rm(list=ls())
 gc()
-#####Env#####
 options(stringsAsFactors = FALSE)
-options(digits = 2)
+options(digits = 10)
 options(scipen = 100)
-options(encoding = "utf8")
 #install.packages("data.table")
 #install.packages("dplyr")
 #install.packages("jsonlite")
@@ -22,27 +21,27 @@ library(stringr)
 
 ##
 getwd()
-setwd("C:/Users/user/Documents/Github/jmt/")
-seoul_ful <- fread("filtered_jmt_2018_seoul_city_ful.txt",encoding='UTF-8')
+setwd("C:/projects/jmt/")
+seoul_ful <- fread("filtered_jmt_2018_seoul_city_ful.csv")
 ##
-seoul_ful <- seoul_ful$exec_loc
-seoul_ful <- gsub(("\\(.*\\)"),"",seoul_ful)
-seoul_ful <- gsub(("\\（.*\\）"),"",seoul_ful)
-seoul_ful <- gsub(("\\(.*\\)"),"",seoul_ful)
-seoul_ful <- gsub(("\\（.*\\)"),"",seoul_ful)
+seoul_ful_n <- seoul_ful$exec_loc
+seoul_ful_n <- gsub(("\\(.*\\)"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\（.*\\）"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\(.*\\)"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\（.*\\)"),"",seoul_ful)
 #seoul_ful2 <- gsub(("외.*"),"",seoul_ful)
 
-seoul_ful <- gsub("（주）","",seoul_ful)
-seoul_ful <- gsub(("서.*로"),"",seoul_ful)
-seoul_ful <- gsub(("서.*길"),"",seoul_ful)
-seoul_ful <- gsub(("서.*구"),"",seoul_ful)
-seoul_ful <- gsub(("㈜"),"",seoul_ful)
-seoul_ful <- gsub(("주식회사"),"",seoul_ful)
-seoul_ful <- gsub(("\\s"),"",seoul_ful)
-seoul_ful <- gsub(("중구.*"),"",seoul_ful)
-seoul_ful <- gsub(("\\（.*"),"",seoul_ful)
-seoul_ful <- gsub(("\\(.*"),"",seoul_ful)
-write(seoul_ful,file="banda.txt")
+seoul_ful_n <- gsub("（주）","",seoul_ful)
+seoul_ful_n <- gsub(("서.*로"),"",seoul_ful)
+seoul_ful_n <- gsub(("서.*길"),"",seoul_ful)
+seoul_ful_n <- gsub(("서.*구"),"",seoul_ful)
+seoul_ful_n <- gsub(("㈜"),"",seoul_ful)
+seoul_ful_n <- gsub(("주식회사"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\s"),"",seoul_ful)
+seoul_ful_n <- gsub(("중구.*"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\（.*"),"",seoul_ful)
+seoul_ful_n <- gsub(("\\(.*"),"",seoul_ful)
+write.table(seoul_ful,file="filtered_list.txt", row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t",append = FALSE)
 
 
 
